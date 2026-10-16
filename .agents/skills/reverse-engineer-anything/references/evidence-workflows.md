@@ -1,5 +1,9 @@
 # Evidence, comparison, and verification workflows
 
+> **Scope:** Evidence paging, comparison tools, residual unknowns, and reconstruction verification.
+> **Read when:** you must compare artifacts/functions, track unknowns, or verify a reconstruction.
+> **Skipping this risks:** claiming equivalence from static differences, or treating a reconstruction pass as global equivalence.
+
 Evidence-producing tools return the complete Evidence record directly in MCP
 `structuredContent` and CLI JSON. Read `normalized_result` for operation data,
 and cite `evidence_id` when another tool or your explanation needs a stable
@@ -41,6 +45,10 @@ or absence:
 - `compare_bundles` compares canonical bundle membership and unknown history.
 - `find_changed_behavior` combines existing comparisons; static differences
   remain candidates, not causal proof.
+
+❌ **Counter-example**: two binaries differ at 0x1000 → "this change caused the behavior difference".
+✅ **Correct**: the difference is a static candidate only. `find_changed_behavior` combines comparisons but does not prove causality — label it hypothesis until corroborated.
+
 - `build_call_path` needs explicit function dossiers from one artifact/provider;
   an incomplete frontier makes absence unknown.
 - `correlate_static_and_runtime` uses explicit mappings; matching patterns are

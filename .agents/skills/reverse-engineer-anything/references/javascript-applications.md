@@ -1,5 +1,9 @@
 # JavaScript and Electron application artifacts
 
+> **Scope:** ASAR/extracted JavaScript static analysis, feature tracing, and version comparison.
+> **Read when:** the target is JS/Electron and the question involves modules, IPC, exports, or version diffs.
+> **Skipping this risks:** a bidirectional trace expanding unrelated siblings, or treating minified names as persistent identity.
+
 For captured or bundled JavaScript that needs readable source recovery, use
 `recover_javascript_sources` with an absolute `path` and absent
 `output_directory`. Supply related runtime/shared/lazy files in
@@ -167,7 +171,11 @@ registration, defaults, or policy enforcement from static analysis.
 For version comparison, analyze each version once, then call
 `compare_application_versions`. Accept only its digest, source-map, structural
 fingerprint, or non-module semantic matches. Module ordinals and minified names
-are not persistent identity. Report added or removed only with complete
+are not persistent identity.
+
+❌ **Counter-example**: v1 has `function a()`, v2 has `function b()` → "`a` was removed and `b` added".
+✅ **Correct**: minified names and ordinals are not stable identity. Report added/removed only with complete opposite-side coverage; otherwise report unknown.
+Report added or removed only with complete
 opposite-side coverage; otherwise report unknown.
 
 When the question asks how one exact exported callable's returned object shape

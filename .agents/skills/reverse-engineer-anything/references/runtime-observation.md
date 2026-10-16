@@ -1,5 +1,9 @@
 # Browser and Electron runtime observation
 
+> **Scope:** passive browser/Electron observation, scenario capture, and static/runtime reconciliation.
+> **Read when:** the question requires runtime behavior, network, or reconciliation of static vs runtime evidence.
+> **Skipping this risks:** claiming REA clicked/navigated/evaluated page JavaScript during passive observation.
+
 Supply the existing browser or Electron instance's literal-port loopback CDP
 endpoint in the request. No separate permission configuration or per-call
 approval flag is needed. Browser discovery lists eligible HTTP(S) pages;
@@ -12,7 +16,11 @@ Start passive browser work with `list_browser_targets`; start Electron runtime w
 packaged fuses with `inspect_electron_fuses`. Inspect the target selected for
 the user's task. Observation with these tools is passive: never claim REA
 clicked, navigated, evaluated page JavaScript, invoked IPC, or captured prior
-activity. REA does not contain the page's network.
+activity.
+
+❌ **Counter-example**: after `inspect_web_page`, "REA clicked export and captured the request".
+✅ **Correct**: passive observation never performs actions — report only what the passive capture observed. If an action is required, use `capture_browser_scenario` with declared actions and report that REA performed them.
+REA does not contain the page's network.
 
 Passive captures omit raw header collections, credential header values, storage
 values, and raw WebSocket/JSON bodies. Selected response metadata, including

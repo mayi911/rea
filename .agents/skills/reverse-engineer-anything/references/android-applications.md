@@ -1,5 +1,9 @@
 # Android application artifacts
 
+> **Scope:** Android APK static analysis via JADX — package identity, manifest declarations, classes, methods, incoming static references.
+> **Read when:** the target is an APK and the question concerns code, classes, methods, or references.
+> **Skipping this risks:** guessing an `overload_index`, or treating manifest/decompiled text as runtime behavior.
+
 Use the connected server's advertised Android tools. Repository main and npm
 4.1.0 include this family. A skill installation alone cannot add it to an
 older server.
@@ -30,7 +34,11 @@ must also allow it). The APK is never launched,
 and no emulator is required.
 
 Manifest entries and decompiled text are static observations, not execution or
-policy enforcement. Incoming references are recovered static relationships;
+policy enforcement.
+
+❌ **Counter-example**: the manifest lists `android.permission.INTERNET` → "the app makes network calls at runtime".
+✅ **Correct**: the manifest declares the permission (observation); whether any code path requests it at runtime is unknown.
+Incoming references are recovered static relationships;
 reflection, dynamic loading, and unresolved calls remain unknown. Preserve
 artifact digests, locations, diagnostics, and incomplete coverage. For archive
 members rather than code analysis, use `open_binary` and `inspect_artifact`.

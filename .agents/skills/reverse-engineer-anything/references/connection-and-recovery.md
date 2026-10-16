@@ -1,7 +1,15 @@
 # Connection and task recovery
 
+> **Scope:** connection, command, approval, and provider blockers; registration repair; CLI fallback.
+> **Read when:** REA tools are missing, a call is blocked by the client, or a provider is unavailable.
+> **Skipping this risks:** repeating setup for every problem, or treating a successful doctor as proof the agent is connected.
+
 Read this guide only for an observed connection, command, approval or provider
-blocker. Keep the user's target and question in view. Explain what prevented the
+blocker.
+
+❌ **Counter-example**: one `rea doctor --json` run reports clean registration → assume the tools are connected.
+✅ **Correct**: doctor proves registration, not the current session's connection. Restart/reconnect, then verify the tools actually appear before resuming.
+Keep the user's target and question in view. Explain what prevented the
 operation and the next useful step; after repair, continue the investigation.
 
 Commands below use an installed `rea`. If none is available, use the package

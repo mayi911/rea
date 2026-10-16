@@ -1,5 +1,9 @@
 # Native, managed, and packaged artifacts
 
+> **Scope:** native binaries, managed assemblies, archives, extraction, and provider specifics (Ghidra/IDA/Kuna).
+> **Read when:** the target is native, managed, packaged, or needs extraction; or the question concerns ELF/Mach-O/PE layout.
+> **Skipping this risks:** treating pseudocode as source, or assuming an ELF file offset plus image base equals an analysis address.
+
 ## Go build metadata
 
 Use `inspect_go_binary` for an explicit local ELF, PE or thin Mach-O when the
@@ -83,7 +87,11 @@ After `open_binary`, use focused search, procedure, or function tools directly.
 Use `binary_overview` when target metadata or inventory context helps answer the
 question. Prefer literal search, names, decompilation, callers, callees, and
 cross-references. Addresses and recovered pseudocode are analysis observations,
-not original source. Provider unavailability and unsupported metadata remain
+not original source.
+
+❌ **Counter-example**: pseudocode shows `decrypt_buffer(buf)` → "this is the original C function".
+✅ **Correct**: it is decompiler output, not original source. Corroborate important branches with assembly, references and callers.
+Provider unavailability and unsupported metadata remain
 unknown rather than false.
 
 For a completed `analyze_function` dossier, use `inspect_analysis_view` with
@@ -132,6 +140,9 @@ snapshot. Keep `mismatch` and `unsupported` explicit. Verified import covers the
 reported static image, not runtime DOS or PC-98 hardware behavior.
 
 For Ghidra decompilation, `procedure_pseudo_code` also accepts `procedure: "file-offset:0x..."`; CLI `rea decompile <path> --file-offset=0x... --provider ghidra` resolves the source byte offset internally. An unresolved 0x-prefixed numeric procedure selector also falls back to a unique file mapping. Existing symbols and analysis addresses win; multiple mappings fail as ambiguous. Preserve the returned file-offset and address locations and raw selection observations. ELF virtual addresses are distinct from file offsets; never assume an arbitrary offset plus image base is an analysis address.
+
+❌ **Counter-example**: file offset 0x1000 → "the function is at virtual address (image base + 0x1000)".
+✅ **Correct**: use `address_to_file_offset` to anchor an observed address to file bytes. Loader fixups can change a word; a source offset does not imply byte equality.
 
 Use `read_bytes` for initialized analysis memory and `address_to_file_offset` to
 anchor one observed address to original file bytes. Loader fixups can change a

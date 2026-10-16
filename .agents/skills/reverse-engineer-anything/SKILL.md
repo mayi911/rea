@@ -2,18 +2,40 @@
 name: reverse-engineer-anything
 description: Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence to explain features, compare versions, decompile code, or guide a reconstruction. Skip REA for ordinary source-repository architecture analysis.
 metadata:
-  version: "42"
+  version: "43"
 ---
+
+<!-- Improved from morluto/rea `reverse-engineer-anything` skill v42 (MIT).
+     Changes (see changes.md for the full diff rationale):
+       (A) added a 5-rule cold-start card at the top;
+       (B) merged the repeated summary-first / no-repeat / truncation rules into one
+           "Evidence consumption contract", and the observation/inference/unknown
+           discipline into one "Conclusion contract" with a confidence scale;
+       (C) added ❌/✅ counter-examples at the three highest-risk points;
+       (D) merged the duplicated "REA setup never installs…" text;
+       (E) simplified the enumerated `doctor --client` list;
+       (F) added a Side-effect contract keyed to the tool effect flags.
+     No original routing rule or tool was removed. -->
 
 # REA
 
-Use REA when a claim depends on a shipped binary or package, decompilation,
-passive application runtime evidence, or comparison with
-behavior not established by available source. For ordinary analysis of a
-complete source repository, use normal repository tools and do not run REA
-readiness or provider commands.
+## The 5 rules you must not violate
 
-## Connect only when needed
+1. Route first, then pick the tool — never `open_binary` as a reflex.
+2. Summary first, item later — never dump a full record into context.
+3. Every conclusion = Observation / Inference / Unknown, each with a confidence level (see the Conclusion contract).
+4. Pseudocode is interpretation, static is not runtime — prefer "unknown" over guessing.
+5. Read-only analysis is the default; approve before any call whose tool declares a destructive effect (`destructiveHint`) — see the Side-effect contract. Skip it unattended.
+
+## 1. Trigger boundary
+
+Use REA when a claim depends on a shipped binary or package, decompilation,
+passive application runtime evidence, or comparison with behavior not
+established by available source. For ordinary analysis of a complete source
+repository, use normal repository tools and do not run REA readiness or
+provider commands.
+
+## 2. Connect and capability probe
 
 Installing this skill supplies instructions; it does not register the REA MCP
 server, install analysis engines, or add tools to an already-running agent.
@@ -25,6 +47,13 @@ a skill installed from repository main may describe capabilities absent from
 an older npm release. Keep complete inline Evidence when that server does not
 advertise retained references.
 
+**Session initialization (once per investigation):** in a target-free session,
+inspect `binary_session` with `{}` and its `result.tool_availability` to fix the
+capability list for this session. Expand each group's `names` and inherit the
+inventory-level client requirements unless a group overrides them. Route
+everything below against that list. A tool absent from the list is absent from
+this session; do not re-probe it.
+
 If tools are absent, a call is blocked by the client, or a required provider is
 unavailable, read [connection and recovery](references/connection-and-recovery.md).
 Diagnose the observed blocker, continue useful supported work, and resume the
@@ -34,12 +63,10 @@ availability have different remedies; avoid repeating setup for all of them.
 1. Diagnose without changing REA or client configuration. `npx` may download
    the package and write to npm's cache. For Codex, run
    `npx -y rea-agents@latest doctor --client codex --json`. Substitute the current
-   supported client: `claude_code`, `claude_desktop`, `codex`, `cursor`,
-   `gemini_cli`, `windsurf`, `devin`, `opencode`, `antigravity`, `copilot_cli`,
-   `commandcode`, `vscode`, `grok_build`, `omp`, or `grok_bot`. `grok_bot` has no local
-   file registration: doctor reports the Grok Bot chat step, and setup does not
-   write `mcp.json`. If the client is unknown, use `doctor --json` and
-   inspect its registration results before choosing a setup scope.
+   supported client. `grok_bot` has no local file registration: doctor reports
+   the Grok Bot chat step, and setup does not write `mcp.json`. If the client is
+   unknown, use `doctor --json` and inspect its registration results before
+   choosing a setup scope.
 2. Distinguish the reason. Missing, malformed, or stale registration needs a
    scoped configuration repair. An aligned registration with no tools in the
    active session needs a restart/reconnection; doctor cannot prove that the
@@ -58,11 +85,10 @@ availability have different remedies; avoid repeating setup for all of them.
    in the session, then resume the original investigation. If they remain
    absent, inspect the client's MCP launch error rather than repeating setup.
 
-REA setup never installs or upgrades Node.js, npm, Homebrew, Java, Ghidra, IDA,
-JADX, Kuna, Binwalk, or Unblob. Use existing prerequisites; do not install unrelated
-software to repair
-MCP registration. For an unsupported client, use manual stdio registration
-with a version-pinned `rea-agents` package or continue through the CLI.
+REA setup never installs or upgrades unrelated software, including Node.js,
+npm, Homebrew, Java, Ghidra, IDA, JADX, Kuna, Binwalk or Unblob. Use existing
+prerequisites. For an unsupported client, use manual stdio registration with a
+version-pinned `rea-agents` package or continue through the CLI.
 
 A concrete CLI fallback for an operator-supplied JavaScript tree or ASAR is:
 
@@ -72,16 +98,15 @@ npx -y rea-agents@latest analyze-javascript-application /absolute/path/to/app --
 
 No MCP registration or native engine is required. Read the returned Evidence,
 graph, limitations, and unknowns with the same care as an MCP result; the CLI
-returns the Evidence record directly. This fallback does not establish that
-MCP is configured. Native CLI tasks still require their selected engine.
-Prefer an existing `rea` CLI. When none is installed and REA package acquisition
-is within the authorized scope, use `npx -y rea-agents@latest` in its place.
-Configuration repair starts with a read-only setup plan; show paths, backups and
-skill replacement before applying authorized changes. Preserve existing approval
-and target-execution boundaries. REA setup never installs or upgrades unrelated
-software, including Node.js, npm, Homebrew, Java, Ghidra, IDA, JADX, Kuna, Binwalk or Unblob.
+returns the Evidence record directly. This fallback does not establish that MCP
+is configured. Native CLI tasks still require their selected engine. Prefer an
+existing `rea` CLI. When none is installed and REA package acquisition is within
+the authorized scope, use `npx -y rea-agents@latest` in its place. Configuration
+repair starts with a read-only setup plan; show paths, backups and skill
+replacement before applying authorized changes. Preserve existing approval and
+target-execution boundaries.
 
-## Route the target first
+## 3. Route the target first
 
 Choose the first tool from the target the user supplied. Use `open_binary` for
 active-target native or archive workflows; target-free tools take their own
@@ -177,7 +202,6 @@ explicit path or endpoint and do not need it.
   A rustc commit hash is an inference from a read-only `/rustc/<40-hex>/` path.
   See the
   [Rust binary guide](https://github.com/morluto/rea/blob/main/docs/rust-binaries.md).
-
 - Explicit local SQLite database snapshot: `inspect_sqlite_database`. Inspect
   with Node.js 24.x >=24.15 or 26+ providing native SQLite limits. Read schema
   first (compact inventory by default), or select an exact ordinary table
@@ -238,67 +262,148 @@ ask when matches are ambiguous. Never choose an example app on the user's behalf
 In a target-free session, use `open_binary` to bind any archive/package or
 native target whose analysis tool operates on the active target. Do not call an
 unadvertised tool; inspect `binary_session` with `{}` and its
-`result.tool_availability` for availability reasons and remediation. Expand each
-group's `names` into entries, inheriting the inventory-level client requirements
-unless the group overrides them. In its closed effect and annotation vocabularies,
-listed flags are true and omitted known flags are false. The grouped name union
-is the complete tool inventory; use `tools/list` for canonical tool schemas.
-Provider candidate facts describe possible providers, while top-level session
-capabilities describe the current route and `analysis_provider_binding` names the
-selected provider. Do not treat those scopes as interchangeable.
+`result.tool_availability` for availability reasons and remediation. In its
+closed effect and annotation vocabularies, listed flags are true and omitted
+known flags are false. The grouped name union is the complete tool inventory;
+use `tools/list` for canonical tool schemas. Provider candidate facts describe
+possible providers, while top-level session capabilities describe the current
+route and `analysis_provider_binding` names the selected provider. Do not treat
+those scopes as interchangeable.
 
-## Work summary-first
+## 4. Evidence consumption contract
 
-Start with the default result and use its inline Evidence and graph context.
-For a JavaScript application or ELF layout whose size is unknown or large,
-call `analyze_javascript_application` or `inspect_binary_layout` with
-`"detail": "summary"`, then inspect the retained `parent_evidence_id` with
-`inspect_analysis_view`.
-Page module identities and select the returned `node_id` before requesting an
-item; a single file path can represent several graph roles. Do not repeat an
-identical analysis or rejected call without a changed input or resolved blocker.
-Recheck session state when a lifecycle change makes that status useful.
-Make a focused follow-up only when the
-returned result leaves a specific question unanswered.
+This section is the single authority for how to read Evidence. Do not re-derive
+these rules elsewhere.
 
-If MCP reports `resource_constraint` with `details.resource: "transport"`, call
-`inspect_analysis_view` with its reported same-session Evidence reference for a
-summary, one section/module, or a stable page. Use `trace_application_feature`
-once a seed is known, or call `export_evidence_bundle` to write the complete
-session to a selected path. The analysis remains complete in the ledger; avoid
-repeating it merely to request the same oversized response. Complete CLI JSON
-output also streams without a single MCP frame.
+1. **Summary first, item later.** Start with the default result and its inline
+   Evidence and graph context. For a JavaScript application or ELF layout whose
+   size is unknown or large, call `analyze_javascript_application` or
+   `inspect_binary_layout` with `"detail": "summary"`, then inspect the retained
+   `parent_evidence_id` with `inspect_analysis_view`. Page module identities and
+   select the returned `node_id` before requesting an item; a single file path
+   can represent several graph roles.
+2. **Do not repeat.** Do not repeat an identical analysis or rejected call
+   without a changed input or resolved blocker. Recheck session state only when a
+   lifecycle change makes that status useful. Make a focused follow-up only when
+   the returned result leaves a specific question unanswered.
+3. **Oversized / truncated = incomplete.** If MCP reports `resource_constraint`
+   with `details.resource: "transport"`, call `inspect_analysis_view` with its
+   reported same-session Evidence reference for a summary, one section/module, or
+   a stable page. Use `trace_application_feature` once a seed is known, or call
+   `export_evidence_bundle` to write the complete session to a selected path. The
+   analysis remains complete in the ledger; avoid repeating it merely to request
+   the same oversized response. Complete CLI JSON output also streams without a
+   single MCP frame.
+   When the retained parent ID is unknown, use `get_evidence_bundle` with
+   `detail: "summary"` and exact filters for operation, target SHA-256,
+   analysis-profile digest or canonical procedure address. Select its returned
+   Evidence ID for the next view instead of requesting the complete bundle.
+   `retention: "complete-record"` means the whole record is stored; native
+   value-flow truncation and unknown metadata remain separate. For an exported
+   portable bundle, use `rea inspect-evidence-bundle` with JSON containing `path`,
+   `detail: "summary"` and the same `filters`. Reading that file still requires
+   validating its full contents within the local memory budget.
+   A client can truncate a successful tool result without a REA transport error.
+   Treat that preview as incomplete; use the retained parent ID for smaller views
+   or export when the full record is needed. Do not parse the preview as canonical
+   JSON or repeat the producer. If the parent ID was lost, recover it from the
+   ledger or the prior summary; do not invent an ID or rerun just to reproduce the
+   same display. For JavaScript, read the
+   [module-view and trace recipes](references/javascript-applications.md) before
+   drilling into a large graph; a broad bidirectional trace can expand unrelated
+   containment relationships even after summary analysis.
 
-When the retained parent ID is unknown, use `get_evidence_bundle` with
-`detail: "summary"` and exact filters for operation, target SHA-256,
-analysis-profile digest or canonical procedure address. Select its returned
-Evidence ID for the next view instead of requesting the complete bundle.
-`retention: "complete-record"` means the whole record is stored; native
-value-flow truncation and unknown metadata remain separate. For an exported
-portable bundle, use `rea inspect-evidence-bundle` with JSON containing `path`,
-`detail: "summary"` and the same `filters`. Reading that file still requires
-validating its full contents within the local memory budget.
+## 5. Conclusion contract
 
-A client can also truncate a successful tool result without a REA transport
-error. Treat that preview as incomplete; use the retained parent ID for smaller
-views or export when the full record is needed. Do not parse the preview as
-canonical JSON or repeat the producer. For JavaScript, read the
-[module-view and trace recipes](references/javascript-applications.md) before
-drilling into a large graph; a broad bidirectional trace can expand unrelated
-containment relationships even after summary analysis.
+Every conclusion must be written in this exact form. This is the single
+authority for the observation / inference / unknown discipline. Cite Evidence
+IDs, preserve limitations and incomplete coverage, and never imply that static
+analysis observed execution.
 
-Every conclusion must distinguish observations, inferences, and unknowns. Cite
-Evidence IDs, preserve limitations and incomplete coverage, and never imply
-that static analysis observed execution. Runtime requests execute the declared
-target and lifecycle; do not broaden the target or action beyond those fields.
+```
+- Observation:  (what the evidence actually shows; cite evidence_id)
+- Inference:   (what you conclude from it, if anything)
+- Unknown:     (what remains unresolved; non-empty when unresolved)
+- Confidence:  confirmed | inferred | hypothesis | unknown  (exactly one)
+```
+
+| Confidence | Definition                                                 |
+| ---------- | ---------------------------------------------------------- |
+| confirmed  | cross-corroborated (assembly + references + callers agree) |
+| inferred   | single-source inference, not yet cross-checked             |
+| hypothesis | multi-source lead, not yet verified                        |
+| unknown    | no evidence                                                |
+
+No "大概/应该/可能" hedging without a level.
+
+❌ **Counter-example 1 — pseudocode ≠ source**: pseudocode shows
+`x = x ^ 0x5A` at 0x4010 → write "this function XOR-encrypts with key 0x5A".
+✅ **Correct**:
+
+- Observation: pseudocode at 0x4010 has an `XOR 0x5A` loop (evidence_id: ev_x).
+- Inference: a possible XOR obfuscation pass; purpose unconfirmed.
+- Unknown: assembly constants and callers not yet checked; "encryption" unproven.
+- Confidence: inferred.
+- Next: run `xrefs` on 0x4010 and inspect callers before concluding.
+
+❌ **Counter-example 2 — static ≠ runtime**: "clicking Export triggers
+`ipcMain.handle('export')`" — stating a static registration as runtime behavior.
+✅ **Correct**:
+
+- Observation: static analysis found `ipcMain.handle('export')` registered.
+- Inference: (none)
+- Unknown: whether it is invoked at runtime.
+- Confidence: confirmed (for the registration) / unknown (for invocation).
+- Next: only run passive observation if the question requires runtime evidence.
+
+❌ **Counter-example 3 — the unknown entry**: an unresolved call target at
+0x4010 → guess `call memset`.
+✅ **Correct**: `call 0x4010` target unresolved → `record_unknown("0x4010 call
+target")` with supporting/contradicting evidence IDs; never fill a plausible name.
 
 Within the user's requested investigation, call available analysis tools
-directly. REA does not require permission grants or per-call approval flags.
-The agent client can independently require approval. Follow the declared request
+directly. REA does not require permission grants or per-call approval flags. The
+agent client can independently require approval. Follow the declared request
 scope and the host's actual access requirements; use the recovery guide for an
-observed client-policy rejection.
+observed client-policy rejection. For the boundary between read-only analysis
+and calls that run or change something, see the Side-effect contract.
 
-## Plan broader investigations
+## 6. Side-effect contract
+
+Read-only analysis is the default and needs no approval. A call that runs or
+changes something has a side effect and must be approved first. This section is
+the single authority for that boundary; the tool's declared effect flags are the
+source of truth, not the tool's name.
+
+Check the tool's `effects` in `binary_session` (tool availability) or `tools/list`.
+When `destructiveHint` is true — the tool declares `executesForeignCode`,
+`mutatesDevice`, or `mayDiscardData` — it runs or changes something. Before such
+a call, state what it will run or change, get the user's explicit agreement, and
+in an unattended run skip it and report the step that needs approval.
+
+Representative side-effecting calls (not exhaustive; trust the flags):
+
+- Runs or drives code REA does not own (`executesForeignCode`):
+  `capture_process_scenario`, `observe_native_calls`, `capture_browser_scenario`
+  (launch/connect actions), and native-UI scenarios.
+- Changes an attached device (`mutatesDevice`): `install_adb_package`,
+  `uninstall_adb_package`, `push_adb_file`, `start_adb_app`,
+  `start_adb_activity`, `stop_adb_app`.
+- Discards data (`mayDiscardData`): Hopper/Ghidra metadata writers
+  (`set_address_name`, `set_comment`, `set_bookmark`, `set_inline_comment`,
+  `annotate_native_function`, …), `close_binary`, and `setup` when it writes
+  configuration or installs Hopper.
+
+A tool that only declares `launchesProcess` or `writesFilesystem` without
+`destructiveHint` (for example `analyze_javascript_application`'s private worker)
+runs its own helper and does not execute the target; it is not a side-effecting
+call and needs no approval. If the flags are unknown or ambiguous, treat the call
+as side-effecting and ask rather than proceed silently.
+
+The client's approval policy is separate. Even when the client would auto-approve,
+state the side effect and, when nobody can be asked, skip and report.
+
+## 7. Plan broader investigations
 
 For requests that span multiple features or subsystems, use a staged workflow:
 
@@ -324,16 +429,17 @@ For requests that span multiple features or subsystems, use a staged workflow:
    available and the questions do not depend on one another, assign distinct
    scopes, point workers to existing evidence, and ask them to return sources,
    conclusions, and unresolved gaps. Otherwise, work sequentially.
-7. Keep a concise finding ledger linking each conclusion to Evidence IDs,
-   confidence/evidence type, search boundary, and remaining unknowns. Update
-   the shared index or investigation report so later passes can reuse results.
+7. Keep a concise finding ledger linking each conclusion to its Evidence ID,
+   confidence level (per the Conclusion contract), evidence type, search
+   boundary, and remaining unknowns. Update the shared index or investigation
+   report so later passes can reuse results.
 
 Before finishing, revisit the original checklist. Mark each question as
-answered, partially answered, or unresolved based on its evidence; keep
-bounded negative searches bounded, and do not describe a broad investigation
-as complete while required questions remain open.
+answered, partially answered, or unresolved based on its evidence; keep bounded
+negative searches bounded, and do not describe a broad investigation as complete
+while required questions remain open.
 
-## Read only the relevant guide
+## 8. Read only the relevant guide
 
 - Native binaries, managed assemblies, archives, and extraction:
   [references/native-and-artifacts.md](references/native-and-artifacts.md)
@@ -347,9 +453,9 @@ as complete while required questions remain open.
 - Evidence paging, comparisons, residual unknowns, and verification:
   [references/evidence-workflows.md](references/evidence-workflows.md)
 
-## Finish the task
+## 9. Finish the task
 
 Explain findings in plain language and tie them to returned evidence. When the
 user asks to build something, use normal coding tools and separate observed
-behavior from design choices. Close an opened native session with
-`close_binary` when the investigation is complete.
+behavior from design choices. Close an opened native session with `close_binary`
+when the investigation is complete.
